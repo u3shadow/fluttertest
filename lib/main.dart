@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vibration/vibration.dart';
 import 'dart:io';
 
 void main() {
@@ -47,6 +48,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Future<void> _vibratePhone() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 200);
+    } else {
+      setState(() {
+        _tip = '该设备不支持震动';
+      });
+    }
+  }
+
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
@@ -96,6 +107,8 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _isPicking ? null : _takePhoto,
               child: Text(_isPicking ? '正在打开相机...' : '拍照'),
             ),
+            const SizedBox(height: 10),
+            ElevatedButton(onPressed: _vibratePhone, child: const Text('手机震动')),
             const SizedBox(height: 20),
             if (_tip != null) ...[
               Text(_tip!, style: const TextStyle(color: Colors.red)),
