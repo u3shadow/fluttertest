@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:vibration/vibration.dart';
 import 'dart:io';
+import 'dart:async';
 
 void main() {
   runApp(const MyApp());
@@ -10,27 +10,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -48,16 +32,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<void> _vibratePhone() async {
-    if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 200);
-    } else {
-      setState(() {
-        _tip = '该设备不支持震动';
-      });
-    }
-  }
-
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
@@ -73,8 +47,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
       if (photo != null) {
         setState(() {
-          _imageFile = File(photo.path);
           _tip = null;
+          _imageFile = File(photo.path);
         });
       } else {
         setState(() {
@@ -96,32 +70,23 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: [
+            if (_imageFile != null)
+              Image.file(_imageFile!, width: 200, height: 200, fit: BoxFit.cover),
+            if (_tip != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(_tip!, style: TextStyle(color: Colors.red)),
+              ),
             ElevatedButton(
-              onPressed: _isPicking ? null : _takePhoto,
-              child: Text(_isPicking ? '正在打开相机...' : '拍照'),
+              onPressed: _takePhoto,
+              child: const Text('拍照'),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(onPressed: _vibratePhone, child: const Text('手机震动')),
-            const SizedBox(height: 20),
-            if (_tip != null) ...[
-              Text(_tip!, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 10),
-            ],
-            _imageFile != null
-                ? Image.file(
-                    _imageFile!,
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  )
-                : const Text('尚未拍照'),
           ],
         ),
       ),
