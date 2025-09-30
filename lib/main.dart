@@ -47,12 +47,32 @@ class _MyHomePageState extends State<MyHomePage> {
       });
       return;
     }
-    if (await Vibration.hasVibrator() ?? false) {
-      // 43拍节奏：4拍+3拍，假设每拍300ms，间隔100ms
-      List<int> pattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
-      _vibrateTimer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
-        Vibration.vibrate(pattern: pattern);
-      });
+    if (await Vibration.hasVibrator()) {
+      if (Platform.isAndroid) {
+        // Android: 使用 pattern 实现 43拍节奏
+        List<int> pattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
+        _vibrateTimer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
+          Vibration.vibrate(pattern: pattern);
+        });
+      } else if (Platform.isIOS) {
+        // iOS: 用定时器模拟 43拍节奏
+        List<int> iosPattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
+        int index = 0;
+        _vibrateTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
+          if (!_isVibrating) {
+            timer.cancel();
+            return;
+          }
+          if (index < iosPattern.length) {
+            if (index % 2 == 0) {
+              await Vibration.vibrate(duration: iosPattern[index]);
+            }
+            index++;
+          } else {
+            index = 0;
+          }
+        });
+      }
       setState(() {
         _isVibrating = true;
         _tip = '震动中，点击可停止';
