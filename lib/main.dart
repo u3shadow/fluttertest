@@ -37,6 +37,21 @@ class _MyHomePageState extends State<MyHomePage> {
   Timer? _vibrateTimer;
   bool _isVibrating = false;
 
+  void _vibrateIOS43(List<int> pattern, int index) async {
+    if (!_isVibrating) return;
+    if (index >= pattern.length) {
+      // 结束后可循环
+      _vibrateIOS43(pattern, 0);
+      return;
+    }
+    if (index % 2 == 0) {
+      await Vibration.vibrate(duration: pattern[index]);
+    }
+    Future.delayed(Duration(milliseconds: pattern[index]), () {
+      _vibrateIOS43(pattern, index + 1);
+    });
+  }
+
   void _toggleVibrate43() async {
     if (_isVibrating) {
       _vibrateTimer?.cancel();
@@ -49,29 +64,48 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     if (await Vibration.hasVibrator()) {
       if (Platform.isAndroid) {
-        // Android: 使用 pattern 实现 43拍节奏
-        List<int> pattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
-        _vibrateTimer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
+        List<int> pattern = [
+          300,
+          100,
+          300,
+          100,
+          300,
+          100,
+          300,
+          400,
+          300,
+          100,
+          300,
+          100,
+          300,
+        ];
+        _vibrateTimer = Timer.periodic(const Duration(milliseconds: 2500), (
+          timer,
+        ) {
           Vibration.vibrate(pattern: pattern);
         });
       } else if (Platform.isIOS) {
-        // iOS: 用定时器模拟 43拍节奏
-        List<int> iosPattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
-        int index = 0;
-        _vibrateTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
-          if (!_isVibrating) {
-            timer.cancel();
-            return;
-          }
-          if (index < iosPattern.length) {
-            if (index % 2 == 0) {
-              await Vibration.vibrate(duration: iosPattern[index]);
-            }
-            index++;
-          } else {
-            index = 0;
-          }
+        List<int> iosPattern = [
+          300,
+          100,
+          300,
+          100,
+          300,
+          100,
+          300,
+          400,
+          300,
+          100,
+          300,
+          100,
+          300,
+        ];
+        setState(() {
+          _isVibrating = true;
+          _tip = '震动中，点击可停止';
         });
+        _vibrateIOS43(iosPattern, 0);
+        return;
       }
       setState(() {
         _isVibrating = true;
@@ -83,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
+
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
@@ -94,10 +129,12 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfoPlugin.androidInfo;
-        info = 'Android ${androidInfo.version.release}\nModel: ${androidInfo.model}\nBrand: ${androidInfo.brand}';
+        info =
+            'Android ${androidInfo.version.release}\nModel: ${androidInfo.model}\nBrand: ${androidInfo.brand}';
       } else if (Platform.isIOS) {
         final iosInfo = await deviceInfoPlugin.iosInfo;
-        info = 'iOS ${iosInfo.systemVersion}\nModel: ${iosInfo.utsname.machine}\nName: ${iosInfo.name}';
+        info =
+            'iOS ${iosInfo.systemVersion}\nModel: ${iosInfo.utsname.machine}\nName: ${iosInfo.name}';
       } else if (Platform.isWindows) {
         final windowsInfo = await deviceInfoPlugin.windowsInfo;
         info = 'Windows ${windowsInfo.productName} ${windowsInfo.releaseId}';
@@ -144,24 +181,24 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: Text(widget.title)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (_imageFile != null)
-              Image.file(_imageFile!, width: 200, height: 200, fit: BoxFit.cover),
+              Image.file(
+                _imageFile!,
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
             if (_tip != null)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(_tip!, style: TextStyle(color: Colors.red)),
               ),
-            ElevatedButton(
-              onPressed: _takePhoto,
-              child: const Text('拍照'),
-            ),
+            ElevatedButton(onPressed: _takePhoto, child: const Text('拍照')),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _showDeviceInfo,
