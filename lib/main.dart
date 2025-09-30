@@ -1,3 +1,4 @@
+import 'package:vibration/vibration.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -33,6 +34,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Future<void> _vibrate() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 500);
+    } else {
+      setState(() {
+        _tip = '当前设备不支持震动';
+      });
+    }
+  }
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
@@ -116,6 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: _showDeviceInfo,
               child: const Text('显示设备信息'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _vibrate,
+              child: const Text('震动手机'),
             ),
             if (_deviceInfo != null)
               Padding(
