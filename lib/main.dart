@@ -34,9 +34,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<void> _vibrate() async {
+  Timer? _vibrateTimer;
+  bool _isVibrating = false;
+
+  void _toggleVibrate43() async {
+    if (_isVibrating) {
+      _vibrateTimer?.cancel();
+      Vibration.cancel();
+      setState(() {
+        _isVibrating = false;
+        _tip = null;
+      });
+      return;
+    }
     if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 500);
+      // 43拍节奏：4拍+3拍，假设每拍300ms，间隔100ms
+      List<int> pattern = [300, 100, 300, 100, 300, 100, 300, 400, 300, 100, 300, 100, 300];
+      _vibrateTimer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
+        Vibration.vibrate(pattern: pattern);
+      });
+      setState(() {
+        _isVibrating = true;
+        _tip = '震动中，点击可停止';
+      });
     } else {
       setState(() {
         _tip = '当前设备不支持震动';
@@ -129,8 +149,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _vibrate,
-              child: const Text('震动手机'),
+              onPressed: _toggleVibrate43,
+              child: Text(_isVibrating ? '停止震动' : '43拍震动'),
             ),
             if (_deviceInfo != null)
               Padding(
