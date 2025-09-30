@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -36,6 +37,30 @@ class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
   String? _tip;
+  String? _deviceInfo;
+  Future<void> _showDeviceInfo() async {
+    final deviceInfoPlugin = DeviceInfoPlugin();
+    String info = '';
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfoPlugin.androidInfo;
+        info = 'Android ${androidInfo.version.release}\nModel: ${androidInfo.model}\nBrand: ${androidInfo.brand}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfoPlugin.iosInfo;
+        info = 'iOS ${iosInfo.systemVersion}\nModel: ${iosInfo.utsname.machine}\nName: ${iosInfo.name}';
+      } else if (Platform.isWindows) {
+        final windowsInfo = await deviceInfoPlugin.windowsInfo;
+        info = 'Windows ${windowsInfo.productName} ${windowsInfo.releaseId}';
+      } else {
+        info = 'Unknown platform';
+      }
+    } catch (e) {
+      info = '获取设备信息失败: $e';
+    }
+    setState(() {
+      _deviceInfo = info;
+    });
+  }
 
   Future<void> _takePhoto() async {
     if (_isPicking) return;
@@ -87,6 +112,16 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _takePhoto,
               child: const Text('拍照'),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _showDeviceInfo,
+              child: const Text('显示设备信息'),
+            ),
+            if (_deviceInfo != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(_deviceInfo!),
+              ),
           ],
         ),
       ),
